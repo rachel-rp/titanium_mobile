@@ -99,13 +99,24 @@
 	}
 
 	UIColor * barColor = [[TiUtils colorValue:[self valueForUndefinedKey:@"barColor"]] _color];
+    
+    UIColor * titleColor = [[TiUtils colorValue:[self valueForUndefinedKey:@"titleColor"]] _color];
+    
+    if (barColor != nil)
+    {
+        [[UINavigationBar appearance] setBarTintColor:barColor];
+        [[UINavigationBar appearance] setBackgroundColor:barColor];
+    }
+    
+    if(titleColor != nil){
+        NSDictionary *navbarTitleTextAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                                                   titleColor,UITextAttributeTextColor, nil];
+        
+        [[UINavigationBar appearance] setTitleTextAttributes:navbarTitleTextAttributes];
+    }
 	
 	MFMailComposeViewController * composer = [[MFMailComposeViewController alloc] init];
 	[composer setMailComposeDelegate:self];
-	if (barColor != nil)
-	{
-        [[composer navigationBar] setBarTintColor:barColor];
-	}
 
 	[composer setSubject:subject];
 	[composer setToRecipients:toArray];

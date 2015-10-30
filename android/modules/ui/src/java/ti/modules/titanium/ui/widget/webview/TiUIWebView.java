@@ -387,6 +387,80 @@ public class TiUIWebView extends TiUIView
 			return false;
 		}
 	}
+    
+    public void postUrl(String url, String params)
+    {
+        reloadMethod = reloadTypes.URL;
+        reloadData = url;
+        String finalUrl = url;
+        Uri uri = Uri.parse(finalUrl);
+        boolean originalUrlHasScheme = (uri.getScheme() != null);
+        
+        if (!originalUrlHasScheme) {
+            finalUrl = getProxy().resolveUrl(null, finalUrl);
+        }
+        
+        if (TiFileFactory.isLocalScheme(finalUrl) && mightBeHtml(finalUrl)) {
+            TiBaseFile tiFile = TiFileFactory.createTitaniumFile(finalUrl, false);
+            if (tiFile != null) {
+                StringBuilder out = new StringBuilder();
+                InputStream fis = null;
+                try {
+                    fis = tiFile.getInputStream();
+                    InputStreamReader reader = new InputStreamReader(fis, "utf-8");
+                    BufferedReader breader = new BufferedReader(reader);
+                    String line = breader.readLine();
+                    while (line != null) {
+                        if (!bindingCodeInjected) {
+                            int pos = line.indexOf("<html");
+                            if (pos >= 0) {
+                                int posEnd = line.indexOf(">", pos);
+                                if (posEnd > pos) {
+                                    out.append(line.substring(pos, posEnd + 1));
+                                    out.append(TiWebViewBinding.SCRIPT_TAG_INJECTION_CODE);
+                                    if ((posEnd + 1) < line.length()) {
+                                        out.append(line.substring(posEnd + 1));
+                                    }
+                                    out.append("\n");
+                                    bindingCodeInjected = true;
+                                    line = breader.readLine();
+                                    continue;
+                                }
+                            }
+                        }
+                        out.append(line);
+                        out.append("\n");
+                        line = breader.readLine();
+                    }
+                    setHtmlInternal(out.toString(), (originalUrlHasScheme ? url : finalUrl), "text/html"); // keep app:// etc. intact in case
+                    // html in file contains links
+                    // to JS that use app:// etc.
+                    return;
+                } catch (IOException ioe) {
+                    Log.e(TAG, "Problem reading from " + url + ": " + ioe.getMessage()
+                          + ". Will let WebView try loading it directly.", ioe);
+                } finally {
+                    if (fis != null) {
+                        try {
+                            fis.close();
+                        } catch (IOException e) {
+                            Log.w(TAG, "Problem closing stream: " + e.getMessage(), e);
+                        }
+                    }
+                }
+            }
+        }
+        
+        Log.d(TAG, "WebView will load " + url + " directly without code injection.", Log.DEBUG_MODE);
+        // iOS parity: for whatever reason, when a remote url is used, the iOS implementation
+        // explicitly sets the native webview's setScalesPageToFit to YES if the
+        // Ti scalesPageToFit property has _not_ been set.
+        if (!proxy.hasProperty(TiC.PROPERTY_SCALES_PAGE_TO_FIT)) {
+            getWebView().getSettings().setLoadWithOverviewMode(true);
+        }
+        isLocalHTML = false;
+        getWebView().postUrl(finalUrl, params.getBytes());
+    }
 
 	public void setUrl(String url)
 	{

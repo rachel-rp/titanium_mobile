@@ -26,6 +26,7 @@ import ti.modules.titanium.ui.widget.webview.TiUIWebView;
 import android.app.Activity;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Bundle;
 import android.webkit.WebView;
 
 @Kroll.proxy(creatableInModule=UIModule.class, propertyAccessors = {
@@ -56,6 +57,7 @@ public class WebViewProxy extends ViewProxy
 	private static final int MSG_RELEASE = MSG_FIRST_ID + 110;
 	private static final int MSG_PAUSE = MSG_FIRST_ID + 111;
 	private static final int MSG_RESUME = MSG_FIRST_ID + 112;
+    private static final int MSG_POST_URL = MSG_FIRST_ID + 113;
 
 	protected static final int MSG_LAST_ID = MSG_FIRST_ID + 999;
 	private static String fusername;
@@ -161,6 +163,10 @@ public class WebViewProxy extends ViewProxy
 				case MSG_SET_USER_AGENT:
 					getWebView().setUserAgentString(msg.obj.toString());
 					return true;
+                case MSG_POST_URL:
+                    Bundle b = msg.getData();
+                    getWebView().postUrl(String.valueOf(b.getCharArray("url")), String.valueOf(b.getCharArray("params")));
+                    return true;
 				case MSG_GET_USER_AGENT: {
 					AsyncResult result = (AsyncResult) msg.obj;
 					result.setResult(getWebView().getUserAgentString());
@@ -212,6 +218,26 @@ public class WebViewProxy extends ViewProxy
 		getWebView().setBasicAuthentication(username, password);
 
 	}
+    
+    @Kroll.method
+    public void postUrl(String url, String params)
+    {
+        
+        TiUIWebView currWebView = getWebView();
+        if (currWebView != null) {
+            if (TiApplication.isUIThread()) {
+                currWebView.postUrl(url, params);
+            } else {
+                Message message = getMainHandler().obtainMessage(MSG_POST_URL);
+                Bundle b = new Bundle(2);
+                
+                b.putCharArray("url", url.toCharArray());
+                b.putCharArray("params", params.toCharArray());
+                message.setData(b);
+                message.sendToTarget();
+            }
+        }
+    }
 
 	@Kroll.method @Kroll.setProperty
 	public void setUserAgent(String userAgent)

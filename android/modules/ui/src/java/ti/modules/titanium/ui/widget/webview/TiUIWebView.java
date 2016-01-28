@@ -35,6 +35,7 @@ import org.appcelerator.titanium.view.TiUIView;
 import ti.modules.titanium.ui.WebViewProxy;
 import ti.modules.titanium.ui.android.AndroidModule;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.FeatureInfo;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -44,6 +45,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.DownloadListener;
 
 @SuppressWarnings("deprecation")
 public class TiUIWebView extends TiUIView
@@ -72,14 +74,18 @@ public class TiUIWebView extends TiUIView
 	
 	private reloadTypes reloadMethod = reloadTypes.DEFAULT;
 	private Object reloadData = null;
+    Context context;
 	
 	private class TiWebView extends WebView
 	{
 		public TiWebViewClient client;
+        
+        
 
-		public TiWebView(Context context)
+		public TiWebView(Context c)
 		{
-			super(context);
+			super(c);
+            context = c;
 		}
 
 		@Override
@@ -186,6 +192,18 @@ public class TiUIWebView extends TiUIView
 		
 		TiWebView webView = isHTCSenseDevice() ? new TiWebView(proxy.getActivity()) : new NonHTCWebView(proxy.getActivity());
 		webView.setVerticalScrollbarOverlay(true);
+        
+        webView.setDownloadListener(new DownloadListener()
+                                    {
+            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength)
+            {
+                //download file using web browser
+                
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(url));
+                context.startActivity(i);
+            }
+        });
 
 		WebSettings settings = webView.getSettings();
 		settings.setUseWideViewPort(true);

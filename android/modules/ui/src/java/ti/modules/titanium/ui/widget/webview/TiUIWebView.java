@@ -198,10 +198,12 @@ public class TiUIWebView extends TiUIView
             public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength)
             {
                 //download file using web browser
-                
-                Intent i = new Intent(Intent.ACTION_VIEW);
+                KrollDict data = new KrollDict();
+                data.put("url", url);
+                getProxy().fireEvent(TiC.EVENT_WEBVIEW_DOWNLOAD_LISTENER, data);
+                /*Intent i = new Intent(Intent.ACTION_VIEW);
                 i.setData(Uri.parse(url));
-                context.startActivity(i);
+                context.startActivity(i);*/
             }
         });
 

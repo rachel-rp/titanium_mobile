@@ -526,6 +526,11 @@ public class TiC
 	 * @module.api
 	 */
 	public static final String EVENT_SSL_ERROR = "sslerror";
+    
+    /**
+     * @module.api
+     */
+    public static final String EVENT_WEBVIEW_DOWNLOAD_LISTENER = "downloadListener";
 	
 	/**
 	 * @module.api
